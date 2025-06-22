@@ -30,6 +30,19 @@ func extractPath(req_line string) string {
 	}
 }
 
+func extractEchoPath(path string) string {
+
+	re := regexp.MustCompile(`/echo/([^\s]+)`)
+
+	matches := re.FindStringSubmatch(path)
+
+	if len(matches) > 1 {
+		return matches[1]
+	} else {
+		return ""
+	}
+}
+
 func main() {
 	// You can use print statements as follows for debugging, they'll be visible when running tests.
 	fmt.Println("Logs from your program will appear here!")
@@ -64,11 +77,16 @@ func main() {
 	// for _, line := range req {
 	// 	fmt.Println(line)
 	// }
-
-	if len(extractPath(req[0])) == 1 {
+	path := extractPath(req[0])
+	if len(path) == 1 {
 		conn.Write([]byte("HTTP/1.1 200 OK\r\n\r\n"))
 	} else {
-		conn.Write([]byte("HTTP/1.1 404 Not Found\r\n\r\n"))
+		echoPath := extractEchoPath(path)
+		if len(echoPath) == 0 {
+			conn.Write([]byte("HTTP/1.1 404 Not Found\r\n\r\n"))
+		} else {
+			conn.Write([]byte(fmt.Sprintf("HTTP/1.1 202 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", len(echoPath), echoPath)))
+		}
 	}
 
 }
