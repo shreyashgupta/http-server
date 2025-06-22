@@ -173,12 +173,12 @@ func (p *RequestParser) parse() (Request, error) {
 type ResponseSelector struct {
 }
 
-func readFile(path string) string {
+func readFile(path string) (string, error) {
 	data, err := os.ReadFile(path) // Go 1.16+
 	if err != nil {
-		panic(err)
+		return "", err
 	}
-	return string(data)
+	return string(data), nil
 }
 
 func (s *ResponseSelector) getResponse(r Request) Response {
@@ -206,12 +206,16 @@ func (s *ResponseSelector) getResponse(r Request) Response {
 	}
 	filePath, isFileReq := r.requestLine.getFilePathIfFile()
 	if isFileReq {
-		fileContent := readFile(directory + filePath)
+		absFilePath := directory + filePath
+		fileContent, err := readFile(absFilePath)
+		if err != nil {
+			return Response{code: 404, codeDesc: "Not Found"}
+		}
 		return Response{code: 200,
 			codeDesc: "OK",
 			headers: map[string]string{
 				"Content-Length": strconv.Itoa(len(fileContent)),
-				"Content-Type":   "text/plain",
+				"Content-Type":   "text/octet-stream",
 			},
 			body: fileContent,
 		}
