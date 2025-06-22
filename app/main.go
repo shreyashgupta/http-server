@@ -206,7 +206,7 @@ func (s *ResponseSelector) getResponse(r Request) Response {
 	}
 	filePath, isFileReq := r.requestLine.getFilePathIfFile()
 	if isFileReq {
-		fileContent := readFile(filePath)
+		fileContent := readFile(directory + filePath)
 		return Response{code: 200,
 			codeDesc: "OK",
 			headers: map[string]string{
@@ -255,11 +255,17 @@ func handleConnection(conn net.Conn) {
 	conn.Close()
 }
 
+var directory = ""
+
 func main() {
 	// You can use print statements as follows for debugging, they'll be visible when running tests.
 	fmt.Println("Logs from your program will appear here!")
 
-	// Uncomment this block to pass the first stage
+	args := os.Args[1:] // skip program name
+
+	if len(args) == 2 {
+		directory = args[1]
+	}
 
 	l, err := net.Listen("tcp", "0.0.0.0:4221")
 	if err != nil {
