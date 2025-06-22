@@ -111,6 +111,19 @@ func (r *RequestLine) getEchoPathIfEcho() (string, bool) {
 	}
 }
 
+func (r *RequestLine) getFilePathIfFile() (string, bool) {
+
+	re := regexp.MustCompile(`/files/([^\s]+)`)
+
+	matches := re.FindStringSubmatch(r.path)
+
+	if len(matches) > 1 {
+		return matches[1], true
+	} else {
+		return "", false
+	}
+}
+
 func (r *RequestLine) isUserAgent() bool {
 
 	re := regexp.MustCompile(`/user-agent`)
@@ -157,27 +170,15 @@ func (p *RequestParser) parse() (Request, error) {
 
 }
 
-func (p *RequestParser) getEchoPath() (string, error) {
-	path := p.reqLineParser.extractPath(p.requestLines[0])
-	echoPath := p.reqLineParser.extractEchoPath(path)
-
-	if echoPath != "" {
-		return echoPath, nil
-	}
-	return "", fmt.Errorf("Not an echo request")
-}
-
-func (p *RequestParser) getUserAgent() (string, error) {
-	path := p.reqLineParser.extractPath(p.requestLines[0])
-	echoPath := p.reqLineParser.extractEchoPath(path)
-
-	if echoPath != "" {
-		return echoPath, nil
-	}
-	return "", fmt.Errorf("Not an echo request")
-}
-
 type ResponseSelector struct {
+}
+
+func readFile(path string) string {
+	data, err := os.ReadFile(path) // Go 1.16+
+	if err != nil {
+		panic(err)
+	}
+	return string(data)
 }
 
 func (s *ResponseSelector) getResponse(r Request) Response {
@@ -203,7 +204,18 @@ func (s *ResponseSelector) getResponse(r Request) Response {
 			body: r.headers.headers["User-Agent"],
 		}
 	}
-
+	filePath, isFileReq := r.requestLine.getEchoPathIfEcho()
+	if isFileReq {
+		fileContent := readFile(filePath)
+		return Response{code: 200,
+			codeDesc: "OK",
+			headers: map[string]string{
+				"Content-Length": strconv.Itoa(len(fileContent)),
+				"Content-Type":   "text/plain",
+			},
+			body: fileContent,
+		}
+	}
 	if len(r.requestLine.path) == 1 {
 		return Response{code: 200, codeDesc: "OK"}
 	} else {
