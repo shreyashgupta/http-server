@@ -229,6 +229,20 @@ func (resp *Response) getResponse() []byte {
 	return []byte(respStr)
 }
 
+func handleConnection(conn net.Conn) {
+	fmt.Println("Handling new connection")
+	requestParser := NewRequestParser(conn)
+	req, err := requestParser.parse()
+	if err != nil {
+		fmt.Println("Error parsing request: ", err.Error())
+		os.Exit(1)
+	}
+	responseSelector := ResponseSelector{}
+	response := responseSelector.getResponse(req)
+	conn.Write(response.getResponse())
+	conn.Close()
+}
+
 func main() {
 	// You can use print statements as follows for debugging, they'll be visible when running tests.
 	fmt.Println("Logs from your program will appear here!")
@@ -240,35 +254,12 @@ func main() {
 		fmt.Println("Failed to bind to port 4221")
 		os.Exit(1)
 	}
-	conn, err := l.Accept()
-	if err != nil {
-		fmt.Println("Error accepting connection: ", err.Error())
-		os.Exit(1)
+	for {
+		conn, err := l.Accept()
+		if err != nil {
+			fmt.Println("Error accepting connection: ", err.Error())
+			os.Exit(1)
+		}
+		go handleConnection(conn)
 	}
-	requestParser := NewRequestParser(conn)
-
-	req, err := requestParser.parse()
-	if err != nil {
-		fmt.Println("Error parsing request: ", err.Error())
-		os.Exit(1)
-	}
-
-	responseSelector := ResponseSelector{}
-
-	response := responseSelector.getResponse(req)
-	conn.Write(response.getResponse())
-
-	// reqLineParser := RequestLineParser{req[0]}
-	// path := reqLineParser.extractPath(req[0])
-	// if len(path) == 1 {
-	// 	conn.Write([]byte("HTTP/1.1 200 OK\r\n\r\n"))
-	// } else {
-	// 	echoPath := reqLineParser.extractEchoPath(path)
-	// 	if len(echoPath) == 0 {
-	// 		conn.Write([]byte("HTTP/1.1 404 Not Found\r\n\r\n"))
-	// 	} else {
-	// 		conn.Write([]byte(fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", len(echoPath), echoPath)))
-	// 	}
-	// }
-
 }
