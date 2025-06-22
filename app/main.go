@@ -204,7 +204,7 @@ func (s *ResponseSelector) getResponse(r Request) Response {
 			body: r.headers.headers["User-Agent"],
 		}
 	}
-	filePath, isFileReq := r.requestLine.getEchoPathIfEcho()
+	filePath, isFileReq := r.requestLine.getFilePathIfFile()
 	if isFileReq {
 		fileContent := readFile(filePath)
 		return Response{code: 200,
