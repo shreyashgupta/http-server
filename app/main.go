@@ -215,7 +215,7 @@ func (s *ResponseSelector) getResponse(r Request) Response {
 			codeDesc: "OK",
 			headers: map[string]string{
 				"Content-Length": strconv.Itoa(len(fileContent)),
-				"Content-Type":   "text/octet-stream",
+				"Content-Type":   "application/octet-stream",
 			},
 			body: fileContent,
 		}
