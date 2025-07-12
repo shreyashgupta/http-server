@@ -370,7 +370,7 @@ func filePostHandler(conn net.Conn, captures map[string]string, req httpserver.R
 	}
 
 	resp := httpserver.Response{Code: 201,
-		CodeDesc: "OK",
+		CodeDesc: "Created",
 	}
 	conn.Write(resp.GetResponseStr())
 	conn.Close()
