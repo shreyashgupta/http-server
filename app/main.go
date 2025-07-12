@@ -330,7 +330,7 @@ func fileHandler(conn net.Conn, captures map[string]string, req httpserver.Reque
 	absFilePath := directory + captures["file_name"]
 	fileContent, err := readFile(absFilePath)
 	if err != nil {
-		resp := httpserver.Response{Code: 500, CodeDesc: "Not Found"}
+		resp := httpserver.Response{Code: 404, CodeDesc: "Not Found"}
 		conn.Write(resp.GetResponseStr())
 		conn.Close()
 	}
