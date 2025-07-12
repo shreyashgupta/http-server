@@ -339,7 +339,7 @@ func fileHandler(conn net.Conn, captures map[string]string, req httpserver.Reque
 		CodeDesc: "OK",
 		Headers: map[string]string{
 			"Content-Length": strconv.Itoa(len(fileContent)),
-			"Content-Type":   "text/plain",
+			"Content-Type":   "application/octet-stream",
 		},
 		Body: fileContent,
 	}
