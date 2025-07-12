@@ -287,6 +287,7 @@ func main() {
 	mux.Get("/echo/{echo_str}", echoHandler)
 	mux.Get("/user-agent", userAgentHandler)
 	mux.Get("/files/{file_name}", fileHandler)
+	mux.Post("/files/{file_name}", filePostHandler)
 
 	server := httpserver.NewHttpServer(mux, "0.0.0.0:4221")
 
@@ -326,10 +327,10 @@ func userAgentHandler(conn net.Conn, captures map[string]string, req httpserver.
 }
 
 func fileHandler(conn net.Conn, captures map[string]string, req httpserver.Request) {
-	absFilePath := directory + captures["file_path"]
+	absFilePath := directory + captures["file_name"]
 	fileContent, err := readFile(absFilePath)
 	if err != nil {
-		resp := httpserver.Response{Code: 404, CodeDesc: "Not Found"}
+		resp := httpserver.Response{Code: 500, CodeDesc: "Not Found"}
 		conn.Write(resp.GetResponseStr())
 		conn.Close()
 	}
@@ -341,6 +342,35 @@ func fileHandler(conn net.Conn, captures map[string]string, req httpserver.Reque
 			"Content-Type":   "text/plain",
 		},
 		Body: fileContent,
+	}
+	conn.Write(resp.GetResponseStr())
+	conn.Close()
+}
+
+func writeToFile(path string, data []byte) error {
+	// Create file (or truncate if it already exists)
+	file, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	// Write data to file
+	_, err = file.Write(data)
+	return err
+}
+
+func filePostHandler(conn net.Conn, captures map[string]string, req httpserver.Request) {
+	absFilePath := directory + captures["file_name"]
+	err := writeToFile(absFilePath, req.GetBodyData())
+	if err != nil {
+		resp := httpserver.Response{Code: 500, CodeDesc: "failed to write"}
+		conn.Write(resp.GetResponseStr())
+		conn.Close()
+	}
+
+	resp := httpserver.Response{Code: 201,
+		CodeDesc: "OK",
 	}
 	conn.Write(resp.GetResponseStr())
 	conn.Close()

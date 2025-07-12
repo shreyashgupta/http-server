@@ -3,8 +3,10 @@ package httpserver
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"net"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -55,30 +57,21 @@ func (p *HeaderParser) parse(headersStr []string) (Headers, error) {
 	return headers, nil
 }
 
-func (p *RequestLineParser) extractEchoPath(path string) string {
+func (p *Bodyparser) parse(headers Headers, reader *bufio.Reader) ([]byte, error) {
+	var body []byte
+	if lenStr, ok := headers.headers["Content-Length"]; ok {
+		contentLength, err := strconv.Atoi(lenStr)
+		if err != nil {
+			return []byte{}, fmt.Errorf("invalid Content-Length: %w", err)
+		}
 
-	re := regexp.MustCompile(`/echo/([^\s]+)`)
-
-	matches := re.FindStringSubmatch(path)
-
-	if len(matches) > 1 {
-		return matches[1]
-	} else {
-		return ""
+		body = make([]byte, contentLength)
+		_, err = io.ReadFull(reader, body)
+		if err != nil {
+			return []byte{}, fmt.Errorf("error reading body: %w", err)
+		}
 	}
-}
-
-func (p *RequestLineParser) extractUserAgent(path string) string {
-
-	re := regexp.MustCompile(`/echo/([^\s]+)`)
-
-	matches := re.FindStringSubmatch(path)
-
-	if len(matches) > 1 {
-		return matches[1]
-	} else {
-		return ""
-	}
+	return body, nil
 }
 
 type RequestParser struct {
@@ -102,12 +95,20 @@ func (p *RequestParser) Parse(conn net.Conn) (Request, error) {
 		}
 	}
 	reqType, reqLinePath := p.reqLineParser.extractPathAndType(requestLines[0])
+
 	headers, err := p.headerParser.parse(requestLines[1:])
 	if err != nil {
 		return Request{}, err
 	}
-	return Request{requestLine: RequestLine{reqType: ToRequestType(reqType), path: reqLinePath}, headers: headers}, nil
 
+	body, err := p.bodyparser.parse(headers, reader)
+	if err != nil {
+		return Request{}, err
+	}
+	return Request{
+		requestLine: RequestLine{reqType: ToRequestType(reqType), path: reqLinePath},
+		headers:     headers,
+		body:        Body{bodyType: getBodyType(headers.headers["Content-Type"]), bodyData: body}}, nil
 }
 
 func NewRequestParser() *RequestParser {
