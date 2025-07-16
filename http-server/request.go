@@ -45,6 +45,11 @@ type Request struct {
 	requestLine RequestLine
 	headers     Headers
 	body        Body
+	captures    map[string]string
+}
+
+func (r *Request) GetCapture(key string) string {
+	return r.captures[key]
 }
 
 func (r *Request) GetHeader(key string) string {

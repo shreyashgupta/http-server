@@ -29,7 +29,7 @@ func ToRequestType(s string) RequestType {
 	}
 }
 
-type Handler func(net.Conn, map[string]string, Request)
+type Handler func(r *Request, w *Writer)
 
 // When a request comes in, it should go through mux to determing the correct handler
 type HttpServer struct {

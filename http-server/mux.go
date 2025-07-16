@@ -157,7 +157,7 @@ func (mux *Mux) Handle(conn net.Conn) {
 	requestParser := NewRequestParser()
 	req, err := requestParser.Parse(conn)
 	if err != nil {
-		fmt.Println("failed to handler connection: ", err)
+		fmt.Println("failed to handle connection: ", err)
 		return
 	}
 	handlerNode, captures, err := mux.GetHandlerAndCapturesForRequest(req)
@@ -168,7 +168,9 @@ func (mux *Mux) Handle(conn net.Conn) {
 		conn.Close()
 		return
 	}
-	handlerNode.handler(conn, captures, req)
+	req.captures = captures
+	handlerNode.handler(&req, NewWriter(conn))
+
 }
 
 func CreateGetRequest(path string) Request {
@@ -178,7 +180,3 @@ func CreateGetRequest(path string) Request {
 func NewMux() *Mux {
 	return &Mux{store: make(map[RequestType]*PathTree)}
 }
-
-// func RunHandler(handlerNode *PathTreeNode) {
-// 	handlerNode.handler(nil)
-// }

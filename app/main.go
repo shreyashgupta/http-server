@@ -294,57 +294,38 @@ func main() {
 	server.Serve()
 }
 
-func defaultHandler(conn net.Conn, captures map[string]string, _ httpserver.Request) {
-	resp := httpserver.Response{Code: 200, CodeDesc: "OK"}
-	conn.Write(resp.GetResponseStr())
-	conn.Close()
+func defaultHandler(_ *httpserver.Request, w *httpserver.Writer) {
+	w.Write()
 }
 
-func echoHandler(conn net.Conn, captures map[string]string, _ httpserver.Request) {
-	resp := httpserver.Response{Code: 200,
-		CodeDesc: "OK",
-		Headers: map[string]string{
-			"Content-Length": strconv.Itoa(len(captures["echo_str"])),
-			"Content-Type":   "text/plain",
-		},
-		Body: captures["echo_str"],
-	}
-	conn.Write(resp.GetResponseStr())
-	conn.Close()
+func echoHandler(r *httpserver.Request, w *httpserver.Writer) {
+	echoStr := r.GetCapture("echo_str")
+	w.SetHeader("Content-Length", strconv.Itoa(len(echoStr)))
+	w.SetHeader("Content-Type", "text/plain")
+	w.SetContent(echoStr)
+	w.Write()
 }
 
-func userAgentHandler(conn net.Conn, captures map[string]string, req httpserver.Request) {
-	resp := httpserver.Response{Code: 200,
-		CodeDesc: "OK",
-		Headers: map[string]string{
-			"Content-Length": strconv.Itoa(len(req.GetHeader("User-Agent"))),
-			"Content-Type":   "text/plain",
-		},
-		Body: req.GetHeader("User-Agent"),
-	}
-	conn.Write(resp.GetResponseStr())
-	conn.Close()
+func userAgentHandler(r *httpserver.Request, w *httpserver.Writer) {
+	userAgent := r.GetHeader("User-Agent")
+	w.SetHeader("Content-Length", strconv.Itoa(len(userAgent)))
+	w.SetHeader("Content-Type", "text/plain")
+	w.SetContent(userAgent)
+	w.Write()
 }
 
-func fileHandler(conn net.Conn, captures map[string]string, req httpserver.Request) {
-	absFilePath := directory + captures["file_name"]
+func fileHandler(r *httpserver.Request, w *httpserver.Writer) {
+	absFilePath := directory + r.GetCapture("file_name")
 	fileContent, err := readFile(absFilePath)
 	if err != nil {
-		resp := httpserver.Response{Code: 404, CodeDesc: "Not Found"}
-		conn.Write(resp.GetResponseStr())
-		conn.Close()
+		w.SetStatusCode(httpserver.HTTP_NOT_FOUND)
+		w.Write()
+		return
 	}
-
-	resp := httpserver.Response{Code: 200,
-		CodeDesc: "OK",
-		Headers: map[string]string{
-			"Content-Length": strconv.Itoa(len(fileContent)),
-			"Content-Type":   "application/octet-stream",
-		},
-		Body: fileContent,
-	}
-	conn.Write(resp.GetResponseStr())
-	conn.Close()
+	w.SetHeader("Content-Length", strconv.Itoa(len(fileContent)))
+	w.SetHeader("Content-Type", "text/plain")
+	w.SetContent(fileContent)
+	w.Write()
 }
 
 func writeToFile(path string, data []byte) error {
@@ -360,18 +341,15 @@ func writeToFile(path string, data []byte) error {
 	return err
 }
 
-func filePostHandler(conn net.Conn, captures map[string]string, req httpserver.Request) {
-	absFilePath := directory + captures["file_name"]
-	err := writeToFile(absFilePath, req.GetBodyData())
+func filePostHandler(r *httpserver.Request, w *httpserver.Writer) {
+	absFilePath := directory + r.GetCapture("file_name")
+	err := writeToFile(absFilePath, r.GetBodyData())
 	if err != nil {
-		resp := httpserver.Response{Code: 500, CodeDesc: "failed to write"}
-		conn.Write(resp.GetResponseStr())
-		conn.Close()
+		w.SetStatusCode(httpserver.HTTP_BAD_REQUEST)
+		w.Write()
+		return
 	}
 
-	resp := httpserver.Response{Code: 201,
-		CodeDesc: "Created",
-	}
-	conn.Write(resp.GetResponseStr())
-	conn.Close()
+	w.SetStatusCode(httpserver.HTTP_CREATED)
+	w.Write()
 }
