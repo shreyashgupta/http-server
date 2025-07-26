@@ -3,6 +3,7 @@ package httpserver
 import (
 	"fmt"
 	"net"
+	"strconv"
 )
 
 type StatusCode int
@@ -77,6 +78,8 @@ func (w *Writer) Write() {
 	if encoding != NONE {
 		w.SetHeader("Content-Encoding", string(encoding))
 	}
+
+	w.SetHeader("Content-Length", strconv.Itoa(len(encodedBody)))
 	rspLine := fmt.Sprintf("HTTP/1.1 %d %s", w.status.code, w.status.desc)
 	headers := ""
 	for _key, _val := range w.headers.headers {
