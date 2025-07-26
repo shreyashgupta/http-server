@@ -1,6 +1,8 @@
 package httpserver
 
 import (
+	"bytes"
+	"compress/gzip"
 	"fmt"
 	"strings"
 )
@@ -13,18 +15,31 @@ const (
 )
 
 type Encoder interface {
-	Encode(s string) string
-	Decode(s string) string
+	Encode(s string) (string, error)
+	Decode(s string) (string, error)
 }
 
 type GzipEncoder struct {
 }
 
-func (e *GzipEncoder) Encode(s string) string {
-	return s
+func (e *GzipEncoder) Encode(s string) (string, error) {
+	var buf bytes.Buffer
+	writer := gzip.NewWriter(&buf)
+
+	_, err := writer.Write([]byte(s))
+	if err != nil {
+		return "", err
+	}
+
+	err = writer.Close() // important to flush and finalize
+	if err != nil {
+		return "", err
+	}
+
+	return string(buf.Bytes()), nil
 }
-func (e *GzipEncoder) Decode(s string) string {
-	return s
+func (e *GzipEncoder) Decode(s string) (string, error) {
+	return s, nil
 }
 
 func getEcodingFromStr(s string) Encoding {

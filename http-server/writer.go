@@ -64,7 +64,12 @@ func (w *Writer) encodeBody(body string) (string, Encoding) {
 	if err != nil {
 		return body, NONE
 	}
-	return encoder.Encode(body), encoding
+	encodedBody, err := encoder.Encode(body)
+	if err != nil {
+		// add a log here
+		return body, NONE
+	}
+	return encodedBody, encoding
 }
 
 func (w *Writer) Write() {
