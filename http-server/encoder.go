@@ -1,6 +1,9 @@
 package httpserver
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type Encoding string
 
@@ -25,14 +28,18 @@ func (e *GzipEncoder) Decode(s string) string {
 }
 
 func getEcodingFromStr(s string) Encoding {
-	if s == "gzip" {
-		return GZIP
+	requestEncodings := strings.Split(s, ",")
+
+	for _, requestEncoding := range requestEncodings {
+		// Return first supported encoding
+		if strings.TrimSpace(requestEncoding) == "gzip" {
+			return GZIP
+		}
 	}
 	return NONE
 }
 
 func GetEncoder(encoding Encoding) (Encoder, error) {
-
 	switch encoding {
 	case GZIP:
 		return &GzipEncoder{}, nil
