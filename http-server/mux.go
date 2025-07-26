@@ -169,7 +169,7 @@ func (mux *Mux) Handle(conn net.Conn) {
 		return
 	}
 	req.captures = captures
-	handlerNode.handler(&req, NewWriter(conn))
+	handlerNode.handler(&req, NewWriter(conn, &req.headers))
 
 }
 

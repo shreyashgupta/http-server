@@ -27,17 +27,19 @@ type RespStatus struct {
 }
 
 type Writer struct {
-	conn    net.Conn
-	headers Headers
-	status  RespStatus
-	body    string
+	conn           net.Conn
+	headers        Headers
+	status         RespStatus
+	body           string
+	requestHeaders *Headers
 }
 
-func NewWriter(conn net.Conn) *Writer {
+func NewWriter(conn net.Conn, requestHeaders *Headers) *Writer {
 	return &Writer{
-		conn:    conn,
-		headers: Headers{headers: make(map[string]string)},
-		status:  RespStatus{HTTP_OK, StatusDescMap[HTTP_OK]},
+		conn:           conn,
+		requestHeaders: requestHeaders,
+		headers:        Headers{headers: make(map[string]string)},
+		status:         RespStatus{HTTP_OK, StatusDescMap[HTTP_OK]},
 	}
 }
 
@@ -56,13 +58,26 @@ func (w *Writer) SetContent(data string) {
 	w.body = data
 }
 
+func (w *Writer) encodeBody(body string) (string, Encoding) {
+	encoding := getEcodingFromStr(w.requestHeaders.headers["Accept-Encoding"])
+	encoder, err := GetEncoder(encoding)
+	if err != nil {
+		return body, NONE
+	}
+	return encoder.Encode(body), encoding
+}
+
 func (w *Writer) Write() {
+	encodedBody, encoding := w.encodeBody(w.body)
+	if encoding != NONE {
+		w.SetHeader("Content-Encoding", string(encoding))
+	}
 	rspLine := fmt.Sprintf("HTTP/1.1 %d %s", w.status.code, w.status.desc)
 	headers := ""
 	for _key, _val := range w.headers.headers {
 		headers += fmt.Sprintf("%s: %s\r\n", _key, _val)
 	}
-	respStr := rspLine + "\r\n" + headers + "\r\n" + w.body
+	respStr := rspLine + "\r\n" + headers + "\r\n" + encodedBody
 	w.conn.Write([]byte(respStr))
 	w.conn.Close()
 }
