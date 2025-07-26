@@ -18,10 +18,10 @@ type GzipEncoder struct {
 }
 
 func (e *GzipEncoder) Encode(s string) string {
-	return ""
+	return s
 }
 func (e *GzipEncoder) Decode(s string) string {
-	return ""
+	return s
 }
 
 func getEcodingFromStr(s string) Encoding {
