@@ -91,5 +91,4 @@ func (w *Writer) Write() {
 	}
 	respStr := rspLine + "\r\n" + headers + "\r\n" + encodedBody
 	w.conn.Write([]byte(respStr))
-	// w.conn.Close()
 }
