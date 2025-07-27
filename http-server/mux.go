@@ -164,11 +164,6 @@ func (mux *Mux) Handle(conn net.Conn) {
 			fmt.Println("failed to handle connection: ", err)
 			return
 		}
-		headerConnection, ok := req.GetHeader("Connection")
-
-		if ok && headerConnection == "close" {
-			return
-		}
 
 		handlerNode, captures, err := mux.GetHandlerAndCapturesForRequest(req)
 		if err != nil {
@@ -180,6 +175,12 @@ func (mux *Mux) Handle(conn net.Conn) {
 		}
 		req.captures = captures
 		handlerNode.handler(&req, NewWriter(conn, &req.headers))
+
+		headerConnection, ok := req.GetHeader("Connection")
+
+		if ok && headerConnection == "close" {
+			return
+		}
 	}
 
 }
