@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"net"
 	"regexp"
 	"strconv"
 	"strings"
@@ -80,9 +79,17 @@ type RequestParser struct {
 	bodyparser    Bodyparser
 }
 
-func (p *RequestParser) Parse(conn net.Conn) (Request, error) {
-	reader := bufio.NewReader(conn)
+func (p *RequestParser) Parse(reader *bufio.Reader) (Request, error) {
 	var requestLines []string
+	_, err := reader.Peek(1)
+	if err != nil {
+		// No data available
+		if err == io.EOF {
+			return Request{}, io.EOF // connection closed
+		}
+		// Can also return nil error to allow graceful wait
+		return Request{}, err
+	}
 	for {
 		line, err := reader.ReadString('\n')
 		if err != nil {

@@ -36,7 +36,7 @@ func (e *GzipEncoder) Encode(s string) (string, error) {
 		return "", err
 	}
 
-	return string(buf.Bytes()), nil
+	return buf.String(), nil
 }
 func (e *GzipEncoder) Decode(s string) (string, error) {
 	return s, nil

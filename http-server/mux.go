@@ -1,6 +1,7 @@
 package httpserver
 
 import (
+	"bufio"
 	"fmt"
 	"net"
 	"strings"
@@ -154,22 +155,26 @@ func (mux *Mux) GetHandlerAndCapturesForRequest(req Request) (*PathTreeNode, map
 
 func (mux *Mux) Handle(conn net.Conn) {
 	// Get request
+	defer conn.Close()
 	requestParser := NewRequestParser()
-	req, err := requestParser.Parse(conn)
-	if err != nil {
-		fmt.Println("failed to handle connection: ", err)
-		return
+	reader := bufio.NewReader(conn)
+	for {
+		req, err := requestParser.Parse(reader)
+		if err != nil {
+			fmt.Println("failed to handle connection: ", err)
+			return
+		}
+		handlerNode, captures, err := mux.GetHandlerAndCapturesForRequest(req)
+		if err != nil {
+			fmt.Println("couldn't find handlers for request: %w", err)
+			resp := Response{Code: 404, CodeDesc: "Not Found"}
+			conn.Write(resp.GetResponseStr())
+			conn.Close()
+			return
+		}
+		req.captures = captures
+		handlerNode.handler(&req, NewWriter(conn, &req.headers))
 	}
-	handlerNode, captures, err := mux.GetHandlerAndCapturesForRequest(req)
-	if err != nil {
-		fmt.Println("couldn't find handlers for request: %w", err)
-		resp := Response{Code: 404, CodeDesc: "Not Found"}
-		conn.Write(resp.GetResponseStr())
-		conn.Close()
-		return
-	}
-	req.captures = captures
-	handlerNode.handler(&req, NewWriter(conn, &req.headers))
 
 }
 
