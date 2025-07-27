@@ -3,7 +3,6 @@ package main
 import (
 	"net"
 	"os"
-	"strconv"
 
 	httpserver "github.com/codecrafters-io/http-server-starter-go/http-server"
 )
@@ -48,7 +47,6 @@ func defaultHandler(_ *httpserver.Request, w *httpserver.Writer) {
 
 func echoHandler(r *httpserver.Request, w *httpserver.Writer) {
 	echoStr := r.GetCapture("echo_str")
-	w.SetHeader("Content-Length", strconv.Itoa(len(echoStr)))
 	w.SetHeader("Content-Type", "text/plain")
 	w.SetContent(echoStr)
 	w.Write()
@@ -56,7 +54,6 @@ func echoHandler(r *httpserver.Request, w *httpserver.Writer) {
 
 func userAgentHandler(r *httpserver.Request, w *httpserver.Writer) {
 	userAgent := r.GetHeader("User-Agent")
-	w.SetHeader("Content-Length", strconv.Itoa(len(userAgent)))
 	w.SetHeader("Content-Type", "text/plain")
 	w.SetContent(userAgent)
 	w.Write()
@@ -70,7 +67,6 @@ func fileHandler(r *httpserver.Request, w *httpserver.Writer) {
 		w.Write()
 		return
 	}
-	w.SetHeader("Content-Length", strconv.Itoa(len(fileContent)))
 	w.SetHeader("Content-Type", "application/octet-stream")
 	w.SetContent(fileContent)
 	w.Write()
