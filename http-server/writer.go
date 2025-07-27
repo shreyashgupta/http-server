@@ -78,7 +78,11 @@ func (w *Writer) Write() {
 	if encoding != NONE {
 		w.SetHeader("Content-Encoding", string(encoding))
 	}
+	headerConnection, ok := w.requestHeaders.headers["Connection"]
 
+	if ok && headerConnection == "close" {
+		w.SetHeader("Connection", "close")
+	}
 	w.SetHeader("Content-Length", strconv.Itoa(len(encodedBody)))
 	rspLine := fmt.Sprintf("HTTP/1.1 %d %s", w.status.code, w.status.desc)
 	headers := ""

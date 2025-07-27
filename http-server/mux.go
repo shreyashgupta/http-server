@@ -166,7 +166,7 @@ func (mux *Mux) Handle(conn net.Conn) {
 		}
 		headerConnection, ok := req.GetHeader("Connection")
 
-		if ok && headerConnection == "Close" {
+		if ok && headerConnection == "close" {
 			return
 		}
 
