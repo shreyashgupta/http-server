@@ -52,8 +52,9 @@ func (r *Request) GetCapture(key string) string {
 	return r.captures[key]
 }
 
-func (r *Request) GetHeader(key string) string {
-	return r.headers.headers[key]
+func (r *Request) GetHeader(key string) (string, bool) {
+	val, ok := r.headers.headers[key]
+	return val, ok
 }
 
 func (r *Request) GetBodyData() []byte {

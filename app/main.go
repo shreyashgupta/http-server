@@ -53,7 +53,7 @@ func echoHandler(r *httpserver.Request, w *httpserver.Writer) {
 }
 
 func userAgentHandler(r *httpserver.Request, w *httpserver.Writer) {
-	userAgent := r.GetHeader("User-Agent")
+	userAgent, _ := r.GetHeader("User-Agent")
 	w.SetHeader("Content-Type", "text/plain")
 	w.SetContent(userAgent)
 	w.Write()
