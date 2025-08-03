@@ -96,6 +96,7 @@ func (p *RequestParser) Parse(reader *bufio.Reader) (Request, error) {
 			// Handle error (e.g., io.EOF for connection close)
 			break
 		}
+
 		requestLines = append(requestLines, strings.TrimSpace(line))
 		if strings.TrimSpace(line) == "" {
 			break // End of headers
