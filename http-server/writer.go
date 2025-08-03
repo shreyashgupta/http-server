@@ -1,6 +1,7 @@
 package httpserver
 
 import (
+	"bytes"
 	"fmt"
 	"net"
 	"strconv"
@@ -31,8 +32,14 @@ type Writer struct {
 	conn           net.Conn
 	headers        Headers
 	status         RespStatus
-	body           string
+	body           bytes.Buffer
 	requestHeaders *Headers
+}
+
+func (w *Writer) Write(content []byte) (int, error) {
+	bytesWritten, err := w.body.Write(content)
+	return bytesWritten, err
+
 }
 
 func NewWriter(conn net.Conn, requestHeaders *Headers) *Writer {
@@ -55,25 +62,21 @@ func (w *Writer) SetHeader(key string, value string) {
 	w.headers.headers[key] = value
 }
 
-func (w *Writer) SetContent(data string) {
-	w.body = data
-}
-
-func (w *Writer) encodeBody(body string) (string, Encoding) {
+func (w *Writer) encodeBody(body bytes.Buffer) (string, Encoding) {
 	encoding := getEcodingFromStr(w.requestHeaders.headers["Accept-Encoding"])
 	encoder, err := GetEncoder(encoding)
 	if err != nil {
-		return body, NONE
+		return body.String(), NONE
 	}
-	encodedBody, err := encoder.Encode(body)
+	encodedBody, err := encoder.Encode(body.String())
 	if err != nil {
 		// add a log here
-		return body, NONE
+		return body.String(), NONE
 	}
 	return encodedBody, encoding
 }
 
-func (w *Writer) Write() {
+func (w *Writer) WriteToConn() {
 	encodedBody, encoding := w.encodeBody(w.body)
 	if encoding != NONE {
 		w.SetHeader("Content-Encoding", string(encoding))

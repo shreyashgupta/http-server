@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net"
 	"os"
 
@@ -42,21 +43,18 @@ func main() {
 }
 
 func defaultHandler(_ *httpserver.Request, w *httpserver.Writer) {
-	w.Write()
 }
 
 func echoHandler(r *httpserver.Request, w *httpserver.Writer) {
 	echoStr := r.GetCapture("echo_str")
 	w.SetHeader("Content-Type", "text/plain")
-	w.SetContent(echoStr)
-	w.Write()
+	fmt.Fprint(w, echoStr)
 }
 
 func userAgentHandler(r *httpserver.Request, w *httpserver.Writer) {
 	userAgent, _ := r.GetHeader("User-Agent")
 	w.SetHeader("Content-Type", "text/plain")
-	w.SetContent(userAgent)
-	w.Write()
+	fmt.Fprint(w, userAgent)
 }
 
 func fileHandler(r *httpserver.Request, w *httpserver.Writer) {
@@ -64,12 +62,11 @@ func fileHandler(r *httpserver.Request, w *httpserver.Writer) {
 	fileContent, err := readFile(absFilePath)
 	if err != nil {
 		w.SetStatusCode(httpserver.HTTP_NOT_FOUND)
-		w.Write()
 		return
 	}
 	w.SetHeader("Content-Type", "application/octet-stream")
-	w.SetContent(fileContent)
-	w.Write()
+	fmt.Fprint(w, fileContent)
+
 }
 
 func writeToFile(path string, data []byte) error {
@@ -89,10 +86,8 @@ func filePostHandler(r *httpserver.Request, w *httpserver.Writer) {
 	err := writeToFile(absFilePath, r.GetBodyData())
 	if err != nil {
 		w.SetStatusCode(httpserver.HTTP_BAD_REQUEST)
-		w.Write()
 		return
 	}
 
 	w.SetStatusCode(httpserver.HTTP_CREATED)
-	w.Write()
 }

@@ -34,10 +34,6 @@ func (tree *PathTree) init() {
 	tree.root = &PathTreeNode{children: make(map[string]*PathTreeNode), handler: nil, nodeAddr: "/"}
 }
 
-func (tree *PathTree) insertWithoutHandler(path string) {
-
-}
-
 func determinePathType(subPath string) SubPathMatchType {
 	if len(subPath) >= 2 && subPath[0] == '{' && subPath[len(subPath)-1] == '}' {
 		return CAPTURE
@@ -174,7 +170,9 @@ func (mux *Mux) Handle(conn net.Conn) {
 			return
 		}
 		req.captures = captures
-		handlerNode.handler(&req, NewWriter(conn, &req.headers))
+		w := NewWriter(conn, &req.headers)
+		handlerNode.handler(&req, w)
+		w.WriteToConn()
 
 		headerConnection, ok := req.GetHeader("Connection")
 
